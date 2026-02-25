@@ -1,0 +1,29 @@
+/* Gravity Sidebar — injected CSS */
+#gravity-sidebar-root {
+  position: fixed !important;
+  top: 0 !important;
+  right: -400px !important;
+  width: 380px !important;
+  height: 100vh !important;
+  z-index: 2147483647 !important;
+  transition: right 0.32s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  pointer-events: none !important;
+}
+
+#gravity-sidebar-root.gravity-open {
+  right: 0 !important;
+  pointer-events: all !important;
+}
+
+#gravity-sidebar-root iframe {
+  width: 100% !important;
+  height: 100% !important;
+  border: none !important;
+  display: block !important;
+}
+
+/* Page shift when sidebar is open */
+body.gravity-shifted {
+  margin-right: 380px !important;
+  transition: margin-right 0.32s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}

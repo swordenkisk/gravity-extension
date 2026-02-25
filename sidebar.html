@@ -1,0 +1,1838 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gravity Sidebar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+<style>
+/* ─── DESIGN SYSTEM ─────────────────────────────────── */
+:root {
+  --bg:       #080810;
+  --surface:  #0f0f1a;
+  --card:     #14141f;
+  --border:   #1c1c2e;
+  --border2:  #252538;
+  --accent:   #8b7cf8;
+  --accent-d: #6a5be0;
+  --accent2:  #f87c6a;
+  --accent3:  #6af8c8;
+  --text:     #eeeef8;
+  --text2:    #9898b8;
+  --muted:    #4a4a68;
+  --success:  #6af8a0;
+  --warning:  #f8d06a;
+  --error:    #f86a6a;
+
+  --glow-a:   rgba(139, 124, 248, 0.4);
+  --glow-b:   rgba(248, 124, 106, 0.3);
+  --glow-c:   rgba(106, 248, 200, 0.3);
+
+  --radius:   10px;
+  --radius-sm: 6px;
+  --font-mono: 'Space Mono', monospace;
+  --font-body: 'DM Sans', sans-serif;
+  --font-display: 'Syne', sans-serif;
+}
+
+*,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* ─── LAYOUT ────────────────────────────────────────── */
+.gravity-app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: var(--bg);
+  border-left: 1px solid var(--border);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Decorative gradient */
+.gravity-app::before {
+  content: '';
+  position: absolute;
+  top: -100px; right: -80px;
+  width: 300px; height: 300px;
+  background: radial-gradient(circle, rgba(139,124,248,0.12) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ─── TOPBAR ─────────────────────────────────────────── */
+.topbar {
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  height: 50px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  background: rgba(8, 8, 16, 0.9);
+  backdrop-filter: blur(10px);
+  position: relative;
+  z-index: 10;
+  gap: 10px;
+}
+
+.logo-mark {
+  width: 28px; height: 28px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+  box-shadow: 0 0 12px var(--glow-a);
+}
+
+.app-title {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  background: linear-gradient(135deg, var(--accent), #b4abff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  flex: 1;
+}
+
+.close-btn {
+  width: 26px; height: 26px;
+  border-radius: 7px;
+  border: 1px solid var(--border2);
+  background: var(--card);
+  color: var(--text2);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+.close-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+
+/* ─── NAV TABS ───────────────────────────────────────── */
+.nav-strip {
+  display: flex;
+  overflow-x: auto;
+  scrollbar-width: none;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  flex-shrink: 0;
+  padding: 0 6px;
+  gap: 2px;
+}
+.nav-strip::-webkit-scrollbar { display: none; }
+
+.nav-tab {
+  flex-shrink: 0;
+  padding: 8px 10px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  user-select: none;
+}
+.nav-tab:hover { color: var(--text2); }
+.nav-tab.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+.nav-tab .t-icon { font-size: 13px; }
+
+/* ─── PANELS ─────────────────────────────────────────── */
+.panels {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+.panel {
+  display: none;
+  height: 100%;
+  overflow-y: auto;
+  padding: 14px 12px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border2) transparent;
+}
+.panel::-webkit-scrollbar { width: 4px; }
+.panel::-webkit-scrollbar-track { background: transparent; }
+.panel::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+.panel.active { display: block; }
+
+/* ─── SHARED COMPONENTS ──────────────────────────────── */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+  margin-bottom: 10px;
+}
+
+.card-title {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+label {
+  display: block;
+  font-size: 11px;
+  color: var(--text2);
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+input[type=text], input[type=number], textarea, select {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 12px;
+  padding: 7px 10px;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  resize: vertical;
+}
+input[type=text]:focus, input[type=number]:focus,
+textarea:focus, select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(139,124,248,0.15);
+}
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%234a4a68' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  padding-right: 28px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+.btn-primary:hover { background: #7a6be8; box-shadow: 0 0 12px var(--glow-a); }
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text2);
+  border-color: var(--border2);
+}
+.btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+.btn-success {
+  background: rgba(106, 248, 160, 0.12);
+  color: var(--success);
+  border-color: rgba(106, 248, 160, 0.25);
+}
+.btn-success:hover { background: rgba(106,248,160,0.2); }
+
+.btn-danger {
+  background: rgba(248, 106, 106, 0.12);
+  color: var(--error);
+  border-color: rgba(248,106,106,0.25);
+}
+.btn-danger:hover { background: rgba(248,106,106,0.2); }
+
+.btn-sm { padding: 4px 10px; font-size: 11px; }
+
+.row { display: flex; gap: 6px; align-items: flex-start; }
+.row > * { flex: 1; }
+.row .btn { flex: 0; }
+
+.output-box {
+  background: #060610;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--accent3);
+  min-height: 36px;
+  word-break: break-all;
+  white-space: pre-wrap;
+  position: relative;
+}
+
+.copy-btn {
+  position: absolute;
+  top: 5px; right: 5px;
+  padding: 2px 6px;
+  font-size: 10px;
+  background: var(--card);
+  border: 1px solid var(--border2);
+  border-radius: 4px;
+  color: var(--text2);
+  cursor: pointer;
+  font-family: var(--font-body);
+  transition: all 0.15s;
+}
+.copy-btn:hover { border-color: var(--accent); color: var(--accent); }
+.copy-btn.copied { color: var(--success); border-color: var(--success); }
+
+.mb { margin-bottom: 8px; }
+.mt { margin-top: 8px; }
+.flex { display: flex; gap: 6px; }
+.flex-wrap { display: flex; flex-wrap: wrap; gap: 5px; }
+
+.badge {
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+.badge-accent { background: rgba(139,124,248,0.15); color: var(--accent); border: 1px solid rgba(139,124,248,0.25); }
+.badge-success { background: rgba(106,248,160,0.12); color: var(--success); border: 1px solid rgba(106,248,160,0.2); }
+.badge-warn { background: rgba(248,208,106,0.12); color: var(--warning); border: 1px solid rgba(248,208,106,0.2); }
+.badge-error { background: rgba(248,106,106,0.12); color: var(--error); border: 1px solid rgba(248,106,106,0.2); }
+
+.divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 10px 0;
+}
+
+/* ─── NOTES ──────────────────────────────────────────── */
+.notes-toolbar {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+.notes-toolbar button {
+  padding: 3px 8px;
+  font-size: 11px;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 4px;
+  color: var(--text2);
+  cursor: pointer;
+  font-family: var(--font-mono);
+  transition: all 0.12s;
+}
+.notes-toolbar button:hover { border-color: var(--accent); color: var(--accent); }
+
+#notes-area {
+  width: 100%;
+  min-height: 200px;
+  resize: vertical;
+  font-family: var(--font-body);
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.notes-stats {
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 6px;
+  display: flex;
+  gap: 10px;
+}
+
+/* ─── COLOR PICKER ───────────────────────────────────── */
+.color-preview-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.color-swatch {
+  width: 48px; height: 48px;
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--border2);
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+.color-values { flex: 1; }
+.color-values .val-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+.val-label {
+  font-size: 10px;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  width: 30px;
+  flex-shrink: 0;
+}
+.val-text {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--text);
+  flex: 1;
+  background: var(--surface);
+  padding: 2px 7px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+}
+
+input[type=color] {
+  width: 100%;
+  height: 36px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  padding: 0;
+}
+
+.palette-row {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+.pal-swatch {
+  width: 28px; height: 28px;
+  border-radius: 6px;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+.pal-swatch:hover { transform: scale(1.15); border-color: var(--text); }
+
+.gradient-result {
+  height: 40px;
+  border-radius: var(--radius-sm);
+  margin-top: 8px;
+  border: 1px solid var(--border2);
+}
+
+/* ─── CALCULATOR ─────────────────────────────────────── */
+.calc-display {
+  background: #060610;
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  margin-bottom: 10px;
+}
+.calc-expr {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--muted);
+  min-height: 16px;
+  word-break: break-all;
+}
+.calc-result {
+  font-family: var(--font-mono);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--accent3);
+  text-align: right;
+  margin-top: 4px;
+}
+
+.calc-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 5px;
+}
+.calc-btn {
+  padding: 10px 5px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.12s;
+  text-align: center;
+}
+.calc-btn:hover { background: var(--border2); border-color: var(--border2); }
+.calc-btn.op { color: var(--accent); }
+.calc-btn.clear { color: var(--error); }
+.calc-btn.equals {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  grid-row: span 2;
+}
+.calc-btn.equals:hover { background: var(--accent-d); }
+.calc-btn.zero { grid-column: span 2; }
+
+/* ─── TIMER ──────────────────────────────────────────── */
+.timer-display {
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 42px;
+  font-weight: 700;
+  letter-spacing: 4px;
+  color: var(--text);
+  padding: 16px 0 12px;
+  background: #060610;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  margin-bottom: 10px;
+  position: relative;
+  overflow: hidden;
+}
+.timer-display::before {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.timer-display.running::before { opacity: 1; animation: scanline 2s linear infinite; }
+@keyframes scanline { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+
+.timer-ms {
+  font-size: 14px;
+  color: var(--muted);
+  display: block;
+  margin-top: -4px;
+}
+
+.timer-controls {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.timer-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.preset-btn {
+  padding: 4px 10px;
+  font-size: 11px;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 20px;
+  color: var(--text2);
+  cursor: pointer;
+  font-family: var(--font-body);
+  transition: all 0.12s;
+}
+.preset-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+.laps-list {
+  max-height: 120px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border2) transparent;
+  margin-top: 8px;
+}
+.lap-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--border);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text2);
+}
+.lap-num { color: var(--muted); }
+.lap-delta { color: var(--accent3); }
+
+/* ─── ENCODER ────────────────────────────────────────── */
+.enc-tabs {
+  display: flex;
+  gap: 3px;
+  margin-bottom: 10px;
+}
+.enc-tab {
+  flex: 1;
+  padding: 5px;
+  text-align: center;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.12s;
+}
+.enc-tab.active, .enc-tab:hover {
+  background: rgba(139,124,248,0.1);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* ─── UNIT CONVERTER ─────────────────────────────────── */
+.unit-result {
+  font-family: var(--font-mono);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--accent3);
+  text-align: center;
+  padding: 10px;
+  background: #060610;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  margin: 8px 0;
+}
+
+/* ─── REGEX TESTER ───────────────────────────────────── */
+.regex-input-wrap {
+  display: flex;
+  align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  margin-bottom: 8px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.regex-input-wrap:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(139,124,248,0.15);
+}
+.regex-slash {
+  padding: 0 8px;
+  font-family: var(--font-mono);
+  font-size: 16px;
+  color: var(--muted);
+  user-select: none;
+}
+.regex-input-wrap input {
+  flex: 1;
+  border: none;
+  background: none;
+  padding: 7px 0;
+  border-radius: 0;
+}
+.regex-input-wrap input:focus { box-shadow: none; }
+.regex-flags {
+  padding: 0 8px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--accent);
+  user-select: none;
+  cursor: pointer;
+}
+.flags-select {
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  cursor: pointer;
+  outline: none;
+  padding: 0;
+  background-image: none;
+  width: auto;
+}
+
+.regex-test-area {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  min-height: 60px;
+  color: var(--text);
+  outline: none;
+  width: 100%;
+  line-height: 1.6;
+  cursor: text;
+}
+
+.highlight { background: rgba(139,124,248,0.3); border-radius: 2px; }
+.regex-stats { font-size: 11px; color: var(--text2); margin-top: 6px; }
+
+/* ─── CLIPBOARD ──────────────────────────────────────── */
+.clip-item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  margin-bottom: 6px;
+  cursor: pointer;
+  transition: all 0.12s;
+  position: relative;
+}
+.clip-item:hover { border-color: var(--accent); }
+.clip-text {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.clip-meta {
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 3px;
+}
+.clip-delete {
+  position: absolute;
+  top: 6px; right: 6px;
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  transition: color 0.12s;
+}
+.clip-delete:hover { color: var(--error); }
+
+.clip-input-row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+/* ─── STATUS TOAST ───────────────────────────────────── */
+.toast {
+  position: fixed;
+  bottom: 14px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--card);
+  border: 1px solid var(--border2);
+  border-radius: 8px;
+  padding: 7px 16px;
+  font-size: 12px;
+  color: var(--text);
+  pointer-events: none;
+  opacity: 0;
+  transition: all 0.25s;
+  z-index: 9999;
+  white-space: nowrap;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+}
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ─── SCROLLBAR GLOBAL ───────────────────────────────── */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border2) transparent;
+}
+
+/* ─── ANIMATIONS ─────────────────────────────────────── */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.panel.active { animation: fadeIn 0.18s ease; }
+
+/* ─── RESIZE HANDLE ──────────────────────────────────── */
+.resize-handle {
+  position: absolute;
+  left: 0; top: 0;
+  width: 4px; height: 100%;
+  cursor: ew-resize;
+  background: transparent;
+  z-index: 100;
+  transition: background 0.2s;
+}
+.resize-handle:hover, .resize-handle.dragging {
+  background: var(--accent);
+}
+
+/* Misc helper */
+.text-muted { color: var(--muted); font-size: 11px; }
+</style>
+</head>
+<body>
+
+<div class="gravity-app" id="gravityApp">
+
+  <!-- Resize handle -->
+  <div class="resize-handle" id="resizeHandle"></div>
+
+  <!-- Top Bar -->
+  <div class="topbar">
+    <div class="logo-mark">⚡</div>
+    <span class="app-title">Gravity</span>
+    <button class="close-btn" id="closeBtn" title="Close (Alt+G)">✕</button>
+  </div>
+
+  <!-- Nav Tabs -->
+  <div class="nav-strip" id="navStrip">
+    <div class="nav-tab active" data-panel="notes"><span class="t-icon">📝</span> Notes</div>
+    <div class="nav-tab" data-panel="colors"><span class="t-icon">🎨</span> Colors</div>
+    <div class="nav-tab" data-panel="calc"><span class="t-icon">🔢</span> Calc</div>
+    <div class="nav-tab" data-panel="timer"><span class="t-icon">⏱</span> Timer</div>
+    <div class="nav-tab" data-panel="encoder"><span class="t-icon">🔤</span> Encoder</div>
+    <div class="nav-tab" data-panel="units"><span class="t-icon">📐</span> Units</div>
+    <div class="nav-tab" data-panel="regex"><span class="t-icon">🔍</span> Regex</div>
+    <div class="nav-tab" data-panel="clipboard"><span class="t-icon">📋</span> Clips</div>
+  </div>
+
+  <!-- Panels -->
+  <div class="panels">
+
+    <!-- ── NOTES ─────────────────────────────────────── -->
+    <div class="panel active" id="panel-notes">
+      <div class="notes-toolbar">
+        <button onclick="wrapText('**','**')"><b>B</b></button>
+        <button onclick="wrapText('*','*')"><i>I</i></button>
+        <button onclick="wrapText('`','`')">``</button>
+        <button onclick="wrapText('# ','')">H1</button>
+        <button onclick="wrapText('## ','')">H2</button>
+        <button onclick="insertLine('- ')">• List</button>
+        <button onclick="insertLine('- [ ] ')">☐ Todo</button>
+        <button onclick="insertLine('> ')">Quote</button>
+        <button onclick="insertSep()">──</button>
+      </div>
+      <textarea id="notes-area" placeholder="Start typing your notes...&#10;&#10;Supports Markdown formatting.&#10;Notes are saved automatically."></textarea>
+      <div class="notes-stats">
+        <span id="notes-words">0 words</span>
+        <span id="notes-chars">0 chars</span>
+        <span id="notes-lines">0 lines</span>
+      </div>
+      <div class="flex mt" style="margin-top:8px;">
+        <button class="btn btn-ghost btn-sm" onclick="copyNotes()">📋 Copy All</button>
+        <button class="btn btn-ghost btn-sm" onclick="downloadNotes()">💾 Download</button>
+        <button class="btn btn-danger btn-sm" onclick="clearNotes()">🗑 Clear</button>
+      </div>
+    </div>
+
+    <!-- ── COLORS ─────────────────────────────────────── -->
+    <div class="panel" id="panel-colors">
+      <div class="card">
+        <div class="card-title">🎨 Color Picker</div>
+        <input type="color" id="colorPicker" value="#8b7cf8" oninput="updateColor(this.value)">
+        <div class="color-preview-row" style="margin-top:10px;">
+          <div class="color-swatch" id="colorSwatch"></div>
+          <div class="color-values">
+            <div class="val-row">
+              <span class="val-label">HEX</span>
+              <span class="val-text" id="colorHex">#8b7cf8</span>
+              <button class="btn btn-ghost btn-sm" onclick="copyVal('colorHex')">Copy</button>
+            </div>
+            <div class="val-row">
+              <span class="val-label">RGB</span>
+              <span class="val-text" id="colorRgb"></span>
+              <button class="btn btn-ghost btn-sm" onclick="copyVal('colorRgb')">Copy</button>
+            </div>
+            <div class="val-row">
+              <span class="val-label">HSL</span>
+              <span class="val-text" id="colorHsl"></span>
+              <button class="btn btn-ghost btn-sm" onclick="copyVal('colorHsl')">Copy</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">🌈 Gradient Builder</div>
+        <div class="row mb">
+          <div>
+            <label>Color 1</label>
+            <input type="color" id="grad1" value="#8b7cf8" oninput="updateGradient()">
+          </div>
+          <div>
+            <label>Color 2</label>
+            <input type="color" id="grad2" value="#f87c6a" oninput="updateGradient()">
+          </div>
+        </div>
+        <div class="row mb">
+          <div>
+            <label>Direction</label>
+            <select id="gradDir" onchange="updateGradient()">
+              <option value="to right">→ Right</option>
+              <option value="to bottom">↓ Bottom</option>
+              <option value="to bottom right">↘ Diagonal</option>
+              <option value="135deg">135°</option>
+              <option value="to top">↑ Top</option>
+            </select>
+          </div>
+        </div>
+        <div class="gradient-result" id="gradPreview"></div>
+        <div class="output-box mt" id="gradOutput" style="margin-top:8px;">
+          <button class="copy-btn" onclick="copyOutput('gradOutput')">copy</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">🎯 Color Palette</div>
+        <label>Hex Color</label>
+        <div class="row mb">
+          <input type="text" id="paletteInput" placeholder="#8b7cf8" value="#8b7cf8">
+          <button class="btn btn-primary btn-sm" onclick="generatePalette()">Generate</button>
+        </div>
+        <div class="palette-row" id="paletteRow"></div>
+      </div>
+    </div>
+
+    <!-- ── CALCULATOR ─────────────────────────────────── -->
+    <div class="panel" id="panel-calc">
+      <div class="calc-display">
+        <div class="calc-expr" id="calcExpr"></div>
+        <div class="calc-result" id="calcResult">0</div>
+      </div>
+      <div class="calc-grid">
+        <button class="calc-btn clear" onclick="calcClear()">AC</button>
+        <button class="calc-btn op" onclick="calcToggleSign()">+/−</button>
+        <button class="calc-btn op" onclick="calcPercent()">%</button>
+        <button class="calc-btn op" onclick="calcInput('/')">÷</button>
+
+        <button class="calc-btn" onclick="calcInput('7')">7</button>
+        <button class="calc-btn" onclick="calcInput('8')">8</button>
+        <button class="calc-btn" onclick="calcInput('9')">9</button>
+        <button class="calc-btn op" onclick="calcInput('*')">×</button>
+
+        <button class="calc-btn" onclick="calcInput('4')">4</button>
+        <button class="calc-btn" onclick="calcInput('5')">5</button>
+        <button class="calc-btn" onclick="calcInput('6')">6</button>
+        <button class="calc-btn op" onclick="calcInput('-')">−</button>
+
+        <button class="calc-btn" onclick="calcInput('1')">1</button>
+        <button class="calc-btn" onclick="calcInput('2')">2</button>
+        <button class="calc-btn" onclick="calcInput('3')">3</button>
+        <button class="calc-btn op" onclick="calcInput('+')">+</button>
+
+        <button class="calc-btn zero" onclick="calcInput('0')">0</button>
+        <button class="calc-btn" onclick="calcInput('.')">.</button>
+        <button class="calc-btn equals" onclick="calcEquals()">=</button>
+      </div>
+      <div class="card" style="margin-top:10px;">
+        <div class="card-title">⚡ Quick Math</div>
+        <div class="row">
+          <input type="text" id="quickMathInput" placeholder="e.g. sqrt(144) + 5^2">
+          <button class="btn btn-primary btn-sm" onclick="evalQuickMath()">Go</button>
+        </div>
+        <div class="output-box mt" id="quickMathResult" style="margin-top:8px;">Result will appear here</div>
+      </div>
+    </div>
+
+    <!-- ── TIMER ──────────────────────────────────────── -->
+    <div class="panel" id="panel-timer">
+      <!-- Stopwatch -->
+      <div class="card">
+        <div class="card-title">⏱ Stopwatch</div>
+        <div class="timer-display" id="swDisplay">
+          00:00:00<span class="timer-ms" id="swMs">.000</span>
+        </div>
+        <div class="timer-controls">
+          <button class="btn btn-primary" style="flex:1" id="swStartBtn" onclick="swToggle()">▶ Start</button>
+          <button class="btn btn-ghost" onclick="swLap()" id="swLapBtn">🚩 Lap</button>
+          <button class="btn btn-danger" onclick="swReset()">↺</button>
+        </div>
+        <div class="laps-list" id="lapsList"></div>
+      </div>
+
+      <!-- Countdown Timer -->
+      <div class="card">
+        <div class="card-title">⏰ Countdown</div>
+        <div class="timer-display" id="cdDisplay">00:00:00</div>
+        <div class="row mb" style="margin-top:8px;">
+          <div>
+            <label>H</label>
+            <input type="number" id="cdH" min="0" max="23" value="0" placeholder="0">
+          </div>
+          <div>
+            <label>M</label>
+            <input type="number" id="cdM" min="0" max="59" value="5" placeholder="5">
+          </div>
+          <div>
+            <label>S</label>
+            <input type="number" id="cdS" min="0" max="59" value="0" placeholder="0">
+          </div>
+        </div>
+        <div class="timer-controls">
+          <button class="btn btn-primary" style="flex:1" id="cdStartBtn" onclick="cdToggle()">▶ Start</button>
+          <button class="btn btn-danger" onclick="cdReset()">↺ Reset</button>
+        </div>
+        <div class="timer-presets" style="margin-top:8px;">
+          <button class="preset-btn" onclick="setCountdown(1,0,0)">1h</button>
+          <button class="preset-btn" onclick="setCountdown(0,30,0)">30m</button>
+          <button class="preset-btn" onclick="setCountdown(0,25,0)">🍅 25m</button>
+          <button class="preset-btn" onclick="setCountdown(0,15,0)">15m</button>
+          <button class="preset-btn" onclick="setCountdown(0,10,0)">10m</button>
+          <button class="preset-btn" onclick="setCountdown(0,5,0)">5m</button>
+          <button class="preset-btn" onclick="setCountdown(0,1,0)">1m</button>
+          <button class="preset-btn" onclick="setCountdown(0,0,30)">30s</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── ENCODER ────────────────────────────────────── -->
+    <div class="panel" id="panel-encoder">
+      <div class="enc-tabs">
+        <div class="enc-tab active" data-enc="base64">Base64</div>
+        <div class="enc-tab" data-enc="url">URL</div>
+        <div class="enc-tab" data-enc="html">HTML</div>
+        <div class="enc-tab" data-enc="unicode">Unicode</div>
+        <div class="enc-tab" data-enc="jwt">JWT</div>
+        <div class="enc-tab" data-enc="hash">Hash</div>
+      </div>
+
+      <div id="enc-base64">
+        <label>Input</label>
+        <textarea id="encInput" rows="4" placeholder="Enter text to encode / decode..."></textarea>
+        <div class="flex mt">
+          <button class="btn btn-primary" onclick="encEncode()">Encode →</button>
+          <button class="btn btn-ghost" onclick="encDecode()">← Decode</button>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:10px;">
+        <div class="card-title">Output</div>
+        <div class="output-box" id="encOutput" style="min-height:60px;">
+          <button class="copy-btn" onclick="copyOutput('encOutput')">copy</button>
+          <span id="encOutputText">Result will appear here</span>
+        </div>
+      </div>
+
+      <!-- JWT section (shown when jwt tab active) -->
+      <div id="enc-jwt" style="display:none;">
+        <label>JWT Token</label>
+        <textarea id="jwtInput" rows="4" placeholder="Paste JWT token here..."></textarea>
+        <button class="btn btn-primary mt" onclick="decodeJWT()" style="margin-top:8px;width:100%;">Decode JWT</button>
+        <div class="card" style="margin-top:10px;">
+          <div class="card-title">Header</div>
+          <div class="output-box" id="jwtHeader">—</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Payload</div>
+          <div class="output-box" id="jwtPayload">—</div>
+        </div>
+      </div>
+
+      <!-- Hash section -->
+      <div id="enc-hash" style="display:none;">
+        <label>Input Text</label>
+        <textarea id="hashInput" rows="3" placeholder="Text to hash..."></textarea>
+        <button class="btn btn-primary mt" onclick="computeHashes()" style="margin-top:8px;width:100%;">Compute Hashes</button>
+        <div class="card" style="margin-top:10px;">
+          <div class="output-box mb" id="hashMD5"><span style="color:var(--muted)">MD5:</span> —</div>
+          <div class="output-box" id="hashSHA256"><span style="color:var(--muted)">SHA-256:</span> —</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── UNIT CONVERTER ─────────────────────────────── -->
+    <div class="panel" id="panel-units">
+      <div class="card">
+        <div class="card-title">📐 Unit Converter</div>
+        <label>Category</label>
+        <select id="unitCategory" onchange="updateUnitLists()" class="mb">
+          <option value="length">Length</option>
+          <option value="weight">Weight</option>
+          <option value="temp">Temperature</option>
+          <option value="area">Area</option>
+          <option value="volume">Volume</option>
+          <option value="speed">Speed</option>
+          <option value="data">Data</option>
+          <option value="time">Time</option>
+          <option value="pressure">Pressure</option>
+          <option value="energy">Energy</option>
+        </select>
+
+        <div class="row mb">
+          <div>
+            <label>From</label>
+            <select id="unitFrom" onchange="convertUnits()"></select>
+          </div>
+          <div>
+            <label>To</label>
+            <select id="unitTo" onchange="convertUnits()"></select>
+          </div>
+        </div>
+
+        <label>Value</label>
+        <input type="number" id="unitValue" value="1" oninput="convertUnits()" class="mb">
+
+        <div class="unit-result" id="unitResult">—</div>
+        <button class="btn btn-ghost btn-sm" onclick="swapUnits()" style="width:100%;">⇅ Swap</button>
+      </div>
+
+      <div class="card">
+        <div class="card-title">🌡 Quick Temperature</div>
+        <div class="row mb">
+          <div>
+            <label>°C</label>
+            <input type="number" id="tempC" placeholder="0" oninput="convertTemp('c')">
+          </div>
+          <div>
+            <label>°F</label>
+            <input type="number" id="tempF" placeholder="32" oninput="convertTemp('f')">
+          </div>
+          <div>
+            <label>K</label>
+            <input type="number" id="tempK" placeholder="273.15" oninput="convertTemp('k')">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── REGEX TESTER ───────────────────────────────── -->
+    <div class="panel" id="panel-regex">
+      <div class="card">
+        <div class="card-title">🔍 Regex Tester</div>
+        <label>Pattern</label>
+        <div class="regex-input-wrap">
+          <span class="regex-slash">/</span>
+          <input type="text" id="regexPattern" placeholder="pattern" oninput="runRegex()">
+          <span class="regex-slash">/</span>
+          <select class="flags-select" id="regexFlags" onchange="runRegex()">
+            <option value="g">g</option>
+            <option value="gi">gi</option>
+            <option value="gm">gm</option>
+            <option value="gim">gim</option>
+            <option value="">none</option>
+            <option value="i">i</option>
+            <option value="m">m</option>
+          </select>
+        </div>
+
+        <label>Test String</label>
+        <div class="regex-test-area" id="regexTestArea" contenteditable="true" spellcheck="false" oninput="runRegex()">The quick brown fox jumps over the lazy dog. 12345.</div>
+        <div class="regex-stats" id="regexStats">No pattern</div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">⚡ Common Patterns</div>
+        <div class="flex-wrap">
+          <button class="preset-btn" onclick="setPattern('\\\\b[A-Za-z0-9._%+\\\\-]+@[A-Za-z0-9.\\\\-]+\\\\.[A-Z|a-z]{2,}\\\\b', 'g')">Email</button>
+          <button class="preset-btn" onclick="setPattern('https?:\\\\/\\\\/[^\\\\s]+', 'gi')">URL</button>
+          <button class="preset-btn" onclick="setPattern('\\\\b\\\\d{1,3}\\\\.\\\\d{1,3}\\\\.\\\\d{1,3}\\\\.\\\\d{1,3}\\\\b', 'g')">IP</button>
+          <button class="preset-btn" onclick="setPattern('^[+]?[(]?[0-9]{3}[)]?[-\\\\s.]?[0-9]{3}[-\\\\s.]?[0-9]{4,6}$', 'gm')">Phone</button>
+          <button class="preset-btn" onclick="setPattern('\\\\b[0-9]{4}[-]?[0-9]{4}[-]?[0-9]{4}[-]?[0-9]{4}\\\\b', 'g')">Credit Card</button>
+          <button class="preset-btn" onclick="setPattern('#[0-9A-Fa-f]{6}\\\\b', 'g')">Hex Color</button>
+          <button class="preset-btn" onclick="setPattern('\\\\d{4}-\\\\d{2}-\\\\d{2}', 'g')">Date</button>
+          <button class="preset-btn" onclick="setPattern('[A-Z][a-z]+', 'g')">Capitalized</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── CLIPBOARD MANAGER ──────────────────────────── -->
+    <div class="panel" id="panel-clipboard">
+      <div class="clip-input-row">
+        <input type="text" id="clipInput" placeholder="Add snippet to clipboard manager...">
+        <button class="btn btn-primary" onclick="addClip()">Add</button>
+      </div>
+      <div id="clipList"></div>
+      <div class="flex" style="margin-top:10px;">
+        <button class="btn btn-ghost btn-sm" onclick="clearClips()">🗑 Clear All</button>
+        <button class="btn btn-ghost btn-sm" onclick="exportClips()">📤 Export</button>
+      </div>
+      <hr class="divider">
+      <p class="text-muted" style="text-align:center;padding:6px 0;">Click an item to copy it to clipboard</p>
+    </div>
+
+  </div><!-- /panels -->
+
+</div><!-- /gravity-app -->
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── UTILITIES ──────────────────────────────────────────────
+function toast(msg, color) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.style.borderColor = color || 'var(--border2)';
+  el.classList.add('show');
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove('show'), 2000);
+}
+
+function copyText(text) {
+  navigator.clipboard?.writeText(text).then(() => toast('✓ Copied!')).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    toast('✓ Copied!');
+  });
+}
+
+function copyOutput(id) {
+  const el = document.getElementById(id);
+  const textEl = el.querySelector('span') || el;
+  const text = textEl.textContent || el.textContent;
+  copyText(text.replace(/^copy$/, '').trim());
+  const btn = el.querySelector('.copy-btn');
+  if (btn) { btn.textContent = '✓'; btn.classList.add('copied'); setTimeout(() => { btn.textContent = 'copy'; btn.classList.remove('copied'); }, 1500); }
+}
+
+function copyVal(id) {
+  copyText(document.getElementById(id).textContent);
+}
+
+function saveState() {
+  try {
+    const state = {
+      notes: document.getElementById('notes-area').value,
+      clips: clips
+    };
+    localStorage.setItem('gravity_state', JSON.stringify(state));
+  } catch(e) {}
+}
+
+function loadState() {
+  try {
+    const state = JSON.parse(localStorage.getItem('gravity_state') || '{}');
+    if (state.notes) document.getElementById('notes-area').value = state.notes;
+    if (state.clips) { clips = state.clips; renderClips(); }
+  } catch(e) {}
+}
+
+// ─── TAB NAVIGATION ─────────────────────────────────────────
+document.getElementById('navStrip').addEventListener('click', e => {
+  const tab = e.target.closest('.nav-tab');
+  if (!tab) return;
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  tab.classList.add('active');
+  document.getElementById('panel-' + tab.dataset.panel).classList.add('active');
+});
+
+// Encoder sub-tabs
+document.querySelectorAll('.enc-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.enc-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    const enc = tab.dataset.enc;
+    document.getElementById('enc-base64').style.display = 'none';
+    document.getElementById('enc-jwt').style.display = 'none';
+    document.getElementById('enc-hash').style.display = 'none';
+    if (enc === 'jwt') document.getElementById('enc-jwt').style.display = '';
+    else if (enc === 'hash') document.getElementById('enc-hash').style.display = '';
+    else document.getElementById('enc-base64').style.display = '';
+    currentEnc = enc;
+  });
+});
+let currentEnc = 'base64';
+
+// ─── CLOSE ──────────────────────────────────────────────────
+document.getElementById('closeBtn').onclick = () => {
+  window.parent.postMessage('gravity:close', '*');
+};
+
+// ─── RESIZE ─────────────────────────────────────────────────
+(function() {
+  const handle = document.getElementById('resizeHandle');
+  const app = document.getElementById('gravityApp');
+  let dragging = false, startX, startW;
+
+  handle.addEventListener('mousedown', e => {
+    dragging = true;
+    startX = e.clientX;
+    startW = app.offsetWidth;
+    handle.classList.add('dragging');
+    e.preventDefault();
+  });
+  document.addEventListener('mousemove', e => {
+    if (!dragging) return;
+    const delta = startX - e.clientX;
+    const newW = Math.min(600, Math.max(280, startW + delta));
+    document.documentElement.style.setProperty('--sidebar-w', newW + 'px');
+    app.style.width = newW + 'px';
+  });
+  document.addEventListener('mouseup', () => {
+    dragging = false;
+    handle.classList.remove('dragging');
+  });
+})();
+
+// ─── NOTES ──────────────────────────────────────────────────
+const notesArea = document.getElementById('notes-area');
+
+function updateNotesStats() {
+  const text = notesArea.value;
+  const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+  document.getElementById('notes-words').textContent = words + ' words';
+  document.getElementById('notes-chars').textContent = text.length + ' chars';
+  document.getElementById('notes-lines').textContent = text.split('\n').length + ' lines';
+}
+
+notesArea.addEventListener('input', () => { updateNotesStats(); saveState(); });
+
+function wrapText(before, after) {
+  const ta = notesArea;
+  const start = ta.selectionStart, end = ta.selectionEnd;
+  const sel = ta.value.substring(start, end);
+  const replacement = before + sel + after;
+  ta.setRangeText(replacement, start, end, 'select');
+  ta.focus();
+  updateNotesStats();
+}
+
+function insertLine(prefix) {
+  const ta = notesArea;
+  const pos = ta.selectionStart;
+  const lineStart = ta.value.lastIndexOf('\n', pos - 1) + 1;
+  ta.setRangeText('\n' + prefix, pos, pos, 'end');
+  ta.focus();
+  updateNotesStats();
+}
+
+function insertSep() {
+  const ta = notesArea;
+  const pos = ta.selectionStart;
+  ta.setRangeText('\n\n─────────────────────\n\n', pos, pos, 'end');
+  ta.focus();
+}
+
+function copyNotes() { copyText(notesArea.value); }
+
+function downloadNotes() {
+  const blob = new Blob([notesArea.value], { type: 'text/markdown' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'gravity-notes-' + new Date().toISOString().slice(0,10) + '.md';
+  a.click();
+}
+
+function clearNotes() {
+  if (confirm('Clear all notes?')) { notesArea.value = ''; updateNotesStats(); saveState(); }
+}
+
+// ─── COLORS ─────────────────────────────────────────────────
+function hexToRgb(hex) {
+  const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+  return { r, g, b };
+}
+
+function rgbToHsl(r, g, b) {
+  r/=255; g/=255; b/=255;
+  const max = Math.max(r,g,b), min = Math.min(r,g,b);
+  let h, s, l = (max+min)/2;
+  if (max===min) { h=s=0; } else {
+    const d = max-min;
+    s = l>0.5 ? d/(2-max-min) : d/(max+min);
+    switch(max) {
+      case r: h=(g-b)/d+(g<b?6:0); break;
+      case g: h=(b-r)/d+2; break;
+      case b: h=(r-g)/d+4; break;
+    }
+    h/=6;
+  }
+  return { h: Math.round(h*360), s: Math.round(s*100), l: Math.round(l*100) };
+}
+
+function updateColor(hex) {
+  document.getElementById('colorPicker').value = hex;
+  document.getElementById('colorSwatch').style.background = hex;
+  document.getElementById('colorHex').textContent = hex;
+  const {r,g,b} = hexToRgb(hex);
+  document.getElementById('colorRgb').textContent = `rgb(${r}, ${g}, ${b})`;
+  const {h,s,l} = rgbToHsl(r,g,b);
+  document.getElementById('colorHsl').textContent = `hsl(${h}, ${s}%, ${l}%)`;
+}
+
+function updateGradient() {
+  const c1 = document.getElementById('grad1').value;
+  const c2 = document.getElementById('grad2').value;
+  const dir = document.getElementById('gradDir').value;
+  const css = `linear-gradient(${dir}, ${c1}, ${c2})`;
+  document.getElementById('gradPreview').style.background = css;
+  const out = document.getElementById('gradOutput');
+  out.querySelector('span') ? out.querySelector('span').textContent = `background: ${css};` : out.insertAdjacentHTML('beforeend', `<span>background: ${css};</span>`);
+}
+
+function generatePalette() {
+  const hex = document.getElementById('paletteInput').value.trim();
+  if (!hex.match(/^#[0-9A-Fa-f]{6}$/)) { toast('Invalid hex color'); return; }
+  const {r,g,b} = hexToRgb(hex);
+  const {h,s} = rgbToHsl(r,g,b);
+  const row = document.getElementById('paletteRow');
+  row.innerHTML = '';
+  // Generate 10 shades
+  for (let i = 0; i <= 9; i++) {
+    const l = 10 + i*9;
+    const color = `hsl(${h},${s}%,${l}%)`;
+    const sw = document.createElement('div');
+    sw.className = 'pal-swatch';
+    sw.style.background = color;
+    sw.title = color;
+    sw.onclick = () => { copyText(color); toast('Copied: ' + color); };
+    row.appendChild(sw);
+  }
+}
+
+// Init colors
+updateColor('#8b7cf8');
+updateGradient();
+
+// ─── CALCULATOR ─────────────────────────────────────────────
+let calcExpr = '';
+let calcHasResult = false;
+
+function updateCalcDisplay() {
+  document.getElementById('calcExpr').textContent = calcExpr;
+}
+
+function calcInput(val) {
+  const ops = ['+', '-', '*', '/'];
+  if (calcHasResult && !ops.includes(val)) {
+    calcExpr = '';
+    calcHasResult = false;
+  }
+  if (calcHasResult && ops.includes(val)) {
+    calcHasResult = false;
+  }
+  calcExpr += val;
+  updateCalcDisplay();
+}
+
+function calcClear() {
+  calcExpr = '';
+  calcHasResult = false;
+  document.getElementById('calcResult').textContent = '0';
+  document.getElementById('calcExpr').textContent = '';
+}
+
+function calcEquals() {
+  try {
+    const expr = calcExpr.replace(/÷/g,'/').replace(/×/g,'*').replace(/−/g,'-');
+    const result = Function('"use strict";return (' + expr + ')')();
+    document.getElementById('calcExpr').textContent = calcExpr + ' =';
+    const r = parseFloat(result.toFixed(10)).toString();
+    document.getElementById('calcResult').textContent = r;
+    calcExpr = r;
+    calcHasResult = true;
+  } catch(e) {
+    document.getElementById('calcResult').textContent = 'Error';
+    calcExpr = '';
+  }
+}
+
+function calcToggleSign() {
+  if (calcExpr && !isNaN(parseFloat(calcExpr))) {
+    calcExpr = (parseFloat(calcExpr) * -1).toString();
+    updateCalcDisplay();
+  }
+}
+
+function calcPercent() {
+  try {
+    const val = Function('"use strict";return (' + calcExpr + ')')();
+    calcExpr = (val / 100).toString();
+    updateCalcDisplay();
+  } catch(e) {}
+}
+
+function evalQuickMath() {
+  const input = document.getElementById('quickMathInput').value;
+  try {
+    const expr = input
+      .replace(/sqrt\(/g, 'Math.sqrt(')
+      .replace(/abs\(/g, 'Math.abs(')
+      .replace(/floor\(/g, 'Math.floor(')
+      .replace(/ceil\(/g, 'Math.ceil(')
+      .replace(/round\(/g, 'Math.round(')
+      .replace(/log\(/g, 'Math.log10(')
+      .replace(/ln\(/g, 'Math.log(')
+      .replace(/sin\(/g, 'Math.sin(')
+      .replace(/cos\(/g, 'Math.cos(')
+      .replace(/tan\(/g, 'Math.tan(')
+      .replace(/\^/g, '**')
+      .replace(/pi/gi, 'Math.PI')
+      .replace(/e(?!\w)/g, 'Math.E');
+    const result = Function('"use strict";return (' + expr + ')')();
+    const out = document.getElementById('quickMathResult');
+    out.textContent = '= ' + parseFloat(result.toFixed(12));
+  } catch(e) {
+    document.getElementById('quickMathResult').textContent = '⚠ ' + e.message;
+  }
+}
+
+document.getElementById('quickMathInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') evalQuickMath();
+});
+
+// ─── TIMER / STOPWATCH ──────────────────────────────────────
+let swRunning = false, swInterval = null, swElapsed = 0, swLapStart = 0, laps = [];
+
+function formatTime(ms) {
+  const h = Math.floor(ms/3600000).toString().padStart(2,'0');
+  const m = Math.floor((ms%3600000)/60000).toString().padStart(2,'0');
+  const s = Math.floor((ms%60000)/1000).toString().padStart(2,'0');
+  return `${h}:${m}:${s}`;
+}
+
+function swTick() {
+  swElapsed += 10;
+  document.getElementById('swDisplay').textContent = formatTime(swElapsed);
+  document.getElementById('swMs').textContent = '.' + (swElapsed%1000).toString().padStart(3,'0');
+}
+
+function swToggle() {
+  if (swRunning) {
+    clearInterval(swInterval);
+    document.getElementById('swStartBtn').textContent = '▶ Start';
+    document.getElementById('swDisplay').classList.remove('running');
+  } else {
+    swInterval = setInterval(swTick, 10);
+    document.getElementById('swStartBtn').textContent = '⏸ Pause';
+    document.getElementById('swDisplay').classList.add('running');
+  }
+  swRunning = !swRunning;
+}
+
+function swLap() {
+  if (!swRunning) return;
+  const delta = swElapsed - swLapStart;
+  laps.push({ total: swElapsed, delta });
+  swLapStart = swElapsed;
+  renderLaps();
+}
+
+function swReset() {
+  clearInterval(swInterval);
+  swRunning = false;
+  swElapsed = 0; swLapStart = 0; laps = [];
+  document.getElementById('swDisplay').textContent = '00:00:00';
+  document.getElementById('swMs').textContent = '.000';
+  document.getElementById('swStartBtn').textContent = '▶ Start';
+  document.getElementById('swDisplay').classList.remove('running');
+  renderLaps();
+}
+
+function renderLaps() {
+  const list = document.getElementById('lapsList');
+  list.innerHTML = laps.slice().reverse().map((l, i) => `
+    <div class="lap-item">
+      <span class="lap-num">Lap ${laps.length - i}</span>
+      <span>${formatTime(l.total)}</span>
+      <span class="lap-delta">+${formatTime(l.delta)}</span>
+    </div>
+  `).join('');
+}
+
+// Countdown
+let cdRunning = false, cdInterval = null, cdRemaining = 0;
+
+function setCountdown(h, m, s) {
+  document.getElementById('cdH').value = h;
+  document.getElementById('cdM').value = m;
+  document.getElementById('cdS').value = s;
+  cdReset();
+}
+
+function cdTick() {
+  cdRemaining -= 1000;
+  if (cdRemaining <= 0) {
+    cdRemaining = 0;
+    clearInterval(cdInterval);
+    cdRunning = false;
+    document.getElementById('cdStartBtn').textContent = '▶ Start';
+    document.getElementById('cdDisplay').classList.remove('running');
+    toast('⏰ Time\'s up!', 'var(--accent2)');
+  }
+  document.getElementById('cdDisplay').textContent = formatTime(cdRemaining);
+}
+
+function cdToggle() {
+  if (cdRunning) {
+    clearInterval(cdInterval);
+    document.getElementById('cdStartBtn').textContent = '▶ Resume';
+    document.getElementById('cdDisplay').classList.remove('running');
+  } else {
+    if (!cdRemaining) {
+      const h = parseInt(document.getElementById('cdH').value)||0;
+      const m = parseInt(document.getElementById('cdM').value)||0;
+      const s = parseInt(document.getElementById('cdS').value)||0;
+      cdRemaining = (h*3600 + m*60 + s) * 1000;
+      if (!cdRemaining) return;
+    }
+    cdInterval = setInterval(cdTick, 1000);
+    document.getElementById('cdStartBtn').textContent = '⏸ Pause';
+    document.getElementById('cdDisplay').classList.add('running');
+  }
+  cdRunning = !cdRunning;
+}
+
+function cdReset() {
+  clearInterval(cdInterval);
+  cdRunning = false;
+  cdRemaining = 0;
+  document.getElementById('cdStartBtn').textContent = '▶ Start';
+  document.getElementById('cdDisplay').classList.remove('running');
+  const h = parseInt(document.getElementById('cdH').value)||0;
+  const m = parseInt(document.getElementById('cdM').value)||0;
+  const s = parseInt(document.getElementById('cdS').value)||0;
+  document.getElementById('cdDisplay').textContent = formatTime((h*3600+m*60+s)*1000);
+}
+
+// ─── ENCODER ────────────────────────────────────────────────
+function encEncode() {
+  const input = document.getElementById('encInput').value;
+  let result = '';
+  try {
+    if (currentEnc === 'base64') result = btoa(unescape(encodeURIComponent(input)));
+    else if (currentEnc === 'url') result = encodeURIComponent(input);
+    else if (currentEnc === 'html') result = input.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    else if (currentEnc === 'unicode') result = [...input].map(c => '\\u' + c.charCodeAt(0).toString(16).padStart(4,'0')).join('');
+    setEncOutput(result);
+  } catch(e) { setEncOutput('⚠ Error: ' + e.message); }
+}
+
+function encDecode() {
+  const input = document.getElementById('encInput').value;
+  let result = '';
+  try {
+    if (currentEnc === 'base64') result = decodeURIComponent(escape(atob(input)));
+    else if (currentEnc === 'url') result = decodeURIComponent(input);
+    else if (currentEnc === 'html') result = input.replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"');
+    else if (currentEnc === 'unicode') result = input.replace(/\\u([0-9a-fA-F]{4})/g, (_,c) => String.fromCharCode(parseInt(c,16)));
+    setEncOutput(result);
+  } catch(e) { setEncOutput('⚠ Error: ' + e.message); }
+}
+
+function setEncOutput(text) {
+  const el = document.getElementById('encOutputText');
+  el.textContent = text;
+}
+
+function decodeJWT() {
+  const token = document.getElementById('jwtInput').value.trim();
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) throw new Error('Invalid JWT format');
+    const decode = (s) => JSON.parse(decodeURIComponent(escape(atob(s.replace(/-/g,'+').replace(/_/g,'/')+('===='.slice((s.length%4)||4))))));
+    document.getElementById('jwtHeader').textContent = JSON.stringify(decode(parts[0]), null, 2);
+    document.getElementById('jwtPayload').textContent = JSON.stringify(decode(parts[1]), null, 2);
+  } catch(e) {
+    document.getElementById('jwtHeader').textContent = '⚠ ' + e.message;
+    document.getElementById('jwtPayload').textContent = '';
+  }
+}
+
+async function computeHashes() {
+  const text = document.getElementById('hashInput').value;
+  const data = new TextEncoder().encode(text);
+  try {
+    const sha256 = await crypto.subtle.digest('SHA-256', data);
+    const sha256hex = Array.from(new Uint8Array(sha256)).map(b=>b.toString(16).padStart(2,'0')).join('');
+    document.getElementById('hashSHA256').innerHTML = `<span style="color:var(--muted)">SHA-256: </span>${sha256hex}`;
+  } catch(e) {}
+  // Simple hash for display
+  let hash = 0;
+  for (let i = 0; i < text.length; i++) { hash = ((hash << 5) - hash) + text.charCodeAt(i); hash |= 0; }
+  document.getElementById('hashMD5').innerHTML = `<span style="color:var(--muted)">djb2: </span>${Math.abs(hash).toString(16)}`;
+}
+
+// ─── UNIT CONVERTER ─────────────────────────────────────────
+const unitData = {
+  length:   { m:1, km:1000, cm:0.01, mm:0.001, mile:1609.344, yard:0.9144, foot:0.3048, inch:0.0254, nm:1e-9 },
+  weight:   { kg:1, g:0.001, mg:1e-6, lb:0.453592, oz:0.028349, stone:6.35029, ton:1000 },
+  area:     { 'm²':1, 'km²':1e6, 'cm²':0.0001, 'ft²':0.092903, 'in²':0.000645, acre:4046.86, hectare:10000 },
+  volume:   { L:1, mL:0.001, m3:1000, gallon:3.78541, quart:0.946353, pint:0.473176, cup:0.236588, fl_oz:0.0295735 },
+  speed:    { 'km/h':1, 'm/s':3.6, mph:1.60934, knot:1.852 },
+  data:     { B:1, KB:1024, MB:1048576, GB:1073741824, TB:1099511627776 },
+  time:     { second:1, minute:60, hour:3600, day:86400, week:604800, month:2629800, year:31557600 },
+  pressure: { Pa:1, kPa:1000, bar:100000, psi:6894.76, atm:101325, mmHg:133.322 },
+  energy:   { J:1, kJ:1000, cal:4.18400, kcal:4184, Wh:3600, kWh:3600000, BTU:1055.06 },
+};
+
+function updateUnitLists() {
+  const cat = document.getElementById('unitCategory').value;
+  const units = Object.keys(unitData[cat] || {});
+  const from = document.getElementById('unitFrom');
+  const to = document.getElementById('unitTo');
+  from.innerHTML = units.map(u => `<option value="${u}">${u}</option>`).join('');
+  to.innerHTML = units.map((u,i) => `<option value="${u}" ${i===1?'selected':''}>${u}</option>`).join('');
+  convertUnits();
+}
+
+function convertUnits() {
+  const cat = document.getElementById('unitCategory').value;
+  if (cat === 'temp') { convertTemp('generic'); return; }
+  const from = document.getElementById('unitFrom').value;
+  const to = document.getElementById('unitTo').value;
+  const val = parseFloat(document.getElementById('unitValue').value);
+  const data = unitData[cat];
+  if (!data || isNaN(val)) { document.getElementById('unitResult').textContent = '—'; return; }
+  const base = val * data[from];
+  const result = base / data[to];
+  document.getElementById('unitResult').textContent = parseFloat(result.toPrecision(8)) + ' ' + to;
+}
+
+function swapUnits() {
+  const from = document.getElementById('unitFrom');
+  const to = document.getElementById('unitTo');
+  [from.value, to.value] = [to.value, from.value];
+  convertUnits();
+}
+
+function convertTemp(from) {
+  let c = parseFloat(document.getElementById('tempC').value);
+  let f = parseFloat(document.getElementById('tempF').value);
+  let k = parseFloat(document.getElementById('tempK').value);
+  if (from === 'c' && !isNaN(c)) {
+    document.getElementById('tempF').value = (c * 9/5 + 32).toFixed(2);
+    document.getElementById('tempK').value = (c + 273.15).toFixed(2);
+  } else if (from === 'f' && !isNaN(f)) {
+    document.getElementById('tempC').value = ((f-32)*5/9).toFixed(2);
+    document.getElementById('tempK').value = ((f-32)*5/9 + 273.15).toFixed(2);
+  } else if (from === 'k' && !isNaN(k)) {
+    document.getElementById('tempC').value = (k - 273.15).toFixed(2);
+    document.getElementById('tempF').value = ((k-273.15)*9/5 + 32).toFixed(2);
+  }
+}
+
+updateUnitLists();
+
+// ─── REGEX ──────────────────────────────────────────────────
+function runRegex() {
+  const pattern = document.getElementById('regexPattern').value;
+  const flags = document.getElementById('regexFlags').value;
+  const testEl = document.getElementById('regexTestArea');
+  const text = testEl.innerText;
+  const stats = document.getElementById('regexStats');
+
+  if (!pattern) {
+    testEl.innerHTML = escHtml(text);
+    stats.textContent = 'No pattern';
+    return;
+  }
+  try {
+    const re = new RegExp(pattern, flags);
+    const matches = [...text.matchAll(new RegExp(pattern, flags.includes('g') ? flags : flags + 'g'))];
+    if (!matches.length) {
+      testEl.innerHTML = escHtml(text);
+      stats.innerHTML = '<span style="color:var(--error)">No matches</span>';
+      return;
+    }
+    // Highlight matches
+    let result = '', lastIdx = 0;
+    for (const m of matches) {
+      result += escHtml(text.slice(lastIdx, m.index));
+      result += `<span class="highlight">${escHtml(m[0])}</span>`;
+      lastIdx = m.index + m[0].length;
+    }
+    result += escHtml(text.slice(lastIdx));
+    testEl.innerHTML = result;
+    stats.innerHTML = `<span style="color:var(--success)">${matches.length} match${matches.length>1?'es':''}</span>`;
+  } catch(e) {
+    testEl.innerHTML = escHtml(text);
+    stats.innerHTML = `<span style="color:var(--error)">⚠ ${e.message}</span>`;
+  }
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function setPattern(p, f) {
+  document.getElementById('regexPattern').value = p.replace(/\\\\/g,'\\');
+  document.getElementById('regexFlags').value = f;
+  runRegex();
+}
+
+// ─── CLIPBOARD MANAGER ──────────────────────────────────────
+let clips = [];
+
+function renderClips() {
+  const list = document.getElementById('clipList');
+  if (!clips.length) {
+    list.innerHTML = '<p class="text-muted" style="text-align:center;padding:20px 0;">No clips yet</p>';
+    return;
+  }
+  list.innerHTML = clips.map((c, i) => `
+    <div class="clip-item" onclick="useClip(${i})">
+      <button class="clip-delete" onclick="deleteClip(event,${i})">×</button>
+      <div class="clip-text">${escHtml(c.text)}</div>
+      <div class="clip-meta">${c.date} · ${c.text.length} chars</div>
+    </div>
+  `).join('');
+}
+
+function addClip() {
+  const input = document.getElementById('clipInput');
+  const text = input.value.trim();
+  if (!text) return;
+  clips.unshift({ text, date: new Date().toLocaleTimeString() });
+  input.value = '';
+  renderClips();
+  saveState();
+}
+
+function useClip(i) {
+  copyText(clips[i].text);
+}
+
+function deleteClip(e, i) {
+  e.stopPropagation();
+  clips.splice(i, 1);
+  renderClips();
+  saveState();
+}
+
+function clearClips() {
+  if (clips.length && confirm('Clear all clips?')) { clips = []; renderClips(); saveState(); }
+}
+
+function exportClips() {
+  const text = clips.map((c,i) => `[${i+1}] ${c.date}\n${c.text}`).join('\n\n---\n\n');
+  const blob = new Blob([text], { type: 'text/plain' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'gravity-clips.txt';
+  a.click();
+}
+
+document.getElementById('clipInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') addClip();
+});
+
+// ─── INIT ────────────────────────────────────────────────────
+loadState();
+updateNotesStats();
+renderClips();
+</script>
+</body>
+</html>
